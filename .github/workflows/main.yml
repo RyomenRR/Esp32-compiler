@@ -19,7 +19,7 @@ jobs:
       - name: Build firmware
         run: pio run
 
-      - - name: Upload firmware
+      - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: firmware
