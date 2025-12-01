@@ -13,16 +13,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install ESP-IDF 4.4
+      - name: Clone ESP-IDF 4.4
         run: |
           git clone --recursive https://github.com/espressif/esp-idf.git -b release/v4.4
+
+      - name: Install ESP-IDF tools
+        run: |
           ./esp-idf/install.sh esp32
+
+      - name: Clone RainMaker SDK
+        run: |
+          git clone --recursive https://github.com/espressif/esp-rainmaker.git
 
       - name: Export ESP-IDF environment
         run: |
           . ./esp-idf/export.sh
 
       - name: Build project
+        env:
+          EXTRA_COMPONENT_DIRS: "${{ github.workspace }}/esp-rainmaker/components"
         run: |
           . ./esp-idf/export.sh
           idf.py build
@@ -31,7 +40,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: |
-            build/*.bin
-            build/*.elf
-            build/*.map
+          path: build/
