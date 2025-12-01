@@ -1,36 +1,38 @@
-name: ESP32 Build
+name: Build ESP32 RainMaker Firmware
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install PlatformIO + esptool
-        run: |
-          pip install platformio
-          pip install esptool
+    - name: Install Arduino CLI
+      uses: arduino/setup-arduino-cli@v1
 
-      - name: Build firmware
-        run: pio run
+    - name: Configure CLI
+      run: |
+        arduino-cli config init
+        arduino-cli config set board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+        arduino-cli core update-index
 
-      - name: Merge full flash image
-        run: |
-          esptool.py --chip esp32 merge_bin \
-            -o full_flash.bin \
-            0x1000 .pio/build/*/bootloader.bin \
-            0x8000 .pio/build/*/partitions.bin \
-            0x10000 .pio/build/*/firmware.bin
+    - name: Install ESP32 core with RainMaker support
+      run: arduino-cli core install esp32:esp32
 
-      - name: Upload merged flash
-        uses: actions/upload-artifact@v4
-        with:
-          name: full_flash
-          path: full_flash.bin
+    - name: Install dependencies (if any)
+      run: |
+        arduino-cli lib install "Adafruit SSD1306"
+        arduino-cli lib install "Adafruit GFX Library"
+
+    - name: Compile firmware
+      run: |
+        arduino-cli compile \
+          --fqbn esp32:esp32:esp32 \
+          --warnings all \
+          ./src
