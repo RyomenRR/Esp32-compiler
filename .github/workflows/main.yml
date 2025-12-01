@@ -13,14 +13,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install PlatformIO
-        run: pip install platformio
+      - name: Install PlatformIO + esptool
+        run: |
+          pip install platformio
+          pip install esptool
 
       - name: Build firmware
         run: pio run
 
-      - name: Upload firmware
+      - name: Merge full flash image
+        run: |
+          esptool.py --chip esp32 merge_bin \
+            -o full_flash.bin \
+            0x1000 .pio/build/*/bootloader.bin \
+            0x8000 .pio/build/*/partitions.bin \
+            0x10000 .pio/build/*/firmware.bin
+
+      - name: Upload merged flash
         uses: actions/upload-artifact@v4
         with:
-          name: firmware
-          path: .pio/build/*/firmware.bin
+          name: sketch
+          path: sketch.bin
