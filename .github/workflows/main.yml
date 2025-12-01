@@ -38,4 +38,4 @@ jobs:
           arduino-cli compile \
             --fqbn esp32:esp32:esp32 \
             --warnings all \
-            ./src/main.ino
+            ./src/src.ino
