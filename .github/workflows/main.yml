@@ -1,4 +1,4 @@
-name: Build ESP32 RainMaker Firmware
+name: Build ESP-IDF RainMaker Firmware
 
 on:
   push:
@@ -13,29 +13,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Arduino CLI (manual install, always works)
+      - name: Install ESP-IDF 4.4
         run: |
-          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
-          sudo mv bin/arduino-cli /usr/local/bin/
-          arduino-cli version
+          git clone --recursive https://github.com/espressif/esp-idf.git -b release/v4.4
+          ./esp-idf/install.sh esp32
 
-      - name: Configure Arduino CLI and install ESP32 core
+      - name: Export ESP-IDF environment
         run: |
-          mkdir -p ~/.arduino15
-          echo "{}" > ~/.arduino15/arduino-cli.yaml
+          . ./esp-idf/export.sh
 
-          arduino-cli config set board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-          arduino-cli core update-index
-          arduino-cli core install esp32:esp32@2.0.14
-
-      - name: Install libraries
+      - name: Build project
         run: |
-          arduino-cli lib install "Adafruit SSD1306"
-          arduino-cli lib install "Adafruit GFX Library"
+          . ./esp-idf/export.sh
+          idf.py build
 
-      - name: Compile ESP32 sketch
-        run: |
-          arduino-cli compile \
-            --fqbn esp32:esp32:esp32 \
-            --warnings all \
-            ./src/src.ino
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: |
+            build/*.bin
+            build/*.elf
+            build/*.map
