@@ -1,8 +1,7 @@
-name: Build ESP32 RainMaker Firmware
+name: Build ESP32
 
 on:
   push:
-    branches: [ main ]
   pull_request:
 
 jobs:
@@ -10,29 +9,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Install Arduino CLI
-      uses: arduino/setup-arduino-cli@v1
+      - name: Install Arduino CLI
+        uses: arduino/arduino-cli-action@v1
 
-    - name: Configure CLI
-      run: |
-        arduino-cli config init
-        arduino-cli config set board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-        arduino-cli core update-index
+      - name: Set up ESP32 core
+        run: |
+          arduino-cli config init
+          arduino-cli config set board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32
 
-    - name: Install ESP32 core with RainMaker support
-      run: arduino-cli core install esp32:esp32
-
-    - name: Install dependencies (if any)
-      run: |
-        arduino-cli lib install "Adafruit SSD1306"
-        arduino-cli lib install "Adafruit GFX Library"
-
-    - name: Compile firmware
-      run: |
-        arduino-cli compile \
-          --fqbn esp32:esp32:esp32 \
-          --warnings all \
+      - name: Compile ESP32 sketch
+        run: |
+          arduino-cli compile \
+            --fqbn esp32:esp32:esp32 \
+            ./src/main.ino          --warnings all \
           /src
